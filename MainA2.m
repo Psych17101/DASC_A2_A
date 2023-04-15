@@ -19,7 +19,7 @@ b = 0.48; % [m] x direction (side where force is applied)
 n_S=5; %number of stiffeners
 ds = a/n_S; 
 P=7e3;
-n_IS=5;
+n_IS=6;
 %% base values
 
 
@@ -35,11 +35,11 @@ hat=[0 90 0 90 90 0 90 0];
 [E_skin, EA_skin, area_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
 
 
-[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.9);
+[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1, 1);
+[E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.49, 1);
 %[E_stiff,EA_stiff, EI_stiff,area_stiff]=IStiff_prop(n_IS); %there are now 4 stiffeners
-
-
+%[E_stiff,EA_stiff, EI_stiff,area_stiff]=SStiffener_comp(n_IS);
+%[E_stiff,EA_stiff, EI_stiff,area_stiff]=TStiffener_comp(n_IS);
 
 
 %% localSkinBuckling, input(n_S, layupskin), output(PB)
@@ -48,12 +48,14 @@ hat=[0 90 0 90 90 0 90 0];
 PB_og=localSkinBuckling(n_S, ogskin, EA_og_skin, EA_og_stiff, P)
 PB_new=localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)
 
-
+lr=EA_skin/(EA_skin+EA_stiff)
 
 wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
+Pcr=stiffenerColumnBuckling(EI_stiff);
+P_skin = P*(1-lr);
 
-
-
+CB = P_skin/Pcr
+%
 
 
 
@@ -137,6 +139,14 @@ wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
 
 
 %% Functions
+function [Pcr]=stiffenerColumnBuckling(EI)
+%EI=115.42;
+L=1;
+Pcr=pi^2*EI/L;
+end
+%failure!
+
+
 function [E, EA, Area] = calculateEAskin(layup, Ex, Ey, vxy, Gxy, b)
 thetadt=layup;
 [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
@@ -150,7 +160,7 @@ E=E10;
 end
 
 
-function [E, EA, EI, Area] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S, factor) %for the original stiffener
+function [E, EA, EI, Area] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S, factor1, factor2) %for the original stiffener
 thetadt=layup;
 [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
 aa=inv(A);
@@ -158,8 +168,11 @@ E10=1/aa(1,1)/h_p;
 E20=1/aa(2,2)/h_p;
 G12=1/aa(3,3)/h_p;
 w_stiff=1e-3.*[15, 15, 20, 15, 15]';
-w_stiff(1)=factor.*w_stiff(1);
-w_stiff(end)=factor.*w_stiff(end);
+w_stiff(2)=factor2.*w_stiff(2);
+w_stiff(4)=factor2.*w_stiff(4);
+w_stiff(1)=factor1.*w_stiff(1);
+w_stiff(end)=factor1.*w_stiff(end);
+w_stiff(3)=factor1.*w_stiff(3);
 t_stiff=h_p.*ones(5,1);
 E_stiff=E10.*ones(5,1);
 Area_stiff=w_stiff.*t_stiff;
@@ -174,7 +187,7 @@ y=1e-2.*[t_stiff(1)/2, 1/2*1.5*cosd(phi), 1.5*cosd(phi)+t_stiff(3)/2, 1/2*1.5*co
 y_neutral=sum(E_stiff.*Area_stiff.*y)/sum(E_stiff.*Area_stiff);
 d=y_neutral-y;
 EIind=E_b.*(w_stiff.*t_stiff.^3/12+Area_stiff.*d.^2);
-EI=sum(EIind);
+EI=n_S*sum(EIind);
 
 
 end

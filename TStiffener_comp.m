@@ -1,4 +1,4 @@
-function [E_I,EA_I, EI_I,Area_tot] = IStiffener_comp(n_s)
+function [E_I,EA_I, EI_I,Area_tot] = TStiffener_comp(n_s)
 % Define material properties
 E_x = 62.046*10^9;
 E_y = 62.046*10^9;
@@ -20,7 +20,7 @@ thetadt_I2 = [0 90 +45 -45 -45 +45 90 0];% web
 [A_I2,B_I2,D_I2,ABD_I2,h_I2,Qbar_2] = ABD_matrixCal(thetadt_I2,E1,E2,nu12,G12);
 
 b_I1 = 1/100;
-b_I2 = 3/100;
+b_I2 = 5/100;
 
 %[E_stiffI,EA_stiffI,EI_stiffI,Area_totI] = IStiffener_comp(A_I1,A_I2,A_I3,D_I1,D_I2,D_I3,h_I1,h_I2,h_I3,b_I1,b_I2,b_I3,n_s)
 
@@ -38,7 +38,7 @@ EA_I2 = E_I2*Area_I2;
 y1 = h_I1/2;
 y2 = b_I2/2 + h_I1;
 sumEAy = EA_I1*y1 + EA_I2*y2;
-EA_I = EA_I1 + EA_I2 + EA_I3;
+EA_I = EA_I1 + EA_I2 ;
 y_neutral = sumEAy/EA_I; 
 
 inv_D_I1 = inv(D_I1);
@@ -46,7 +46,7 @@ inv_D_I2 = inv(D_I2);
 Eb_I1 = 12/(inv_D_I1(1,1)*h_I1^3);
 Eb_I2 = 12/(inv_D_I2(1,1)*h_I2^3);
 d_I1 = y_neutral - b_I2/2 - h_I1/2;
-EI_I = Eb_I1*(b_I1*h_I1^3/12 + Area_I1*d_I1^2) + Eb_I2*h_I2*b_I3^3/12;
+EI_I = Eb_I1*(b_I1*h_I1^3/12 + Area_I1*d_I1^2) + Eb_I2*(b_I2*h_I2^3/12);
 
 Area_single_tot = Area_I1 + Area_I2;
 Area_tot = n_s*Area_single_tot;

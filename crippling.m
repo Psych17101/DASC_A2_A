@@ -57,7 +57,7 @@ G12s=1/aas(3,3)/h_ps;
 
 
 %% members
-w_stiff=1e-3.*[15, 15, 20, 15, 15]';
+w_stiff=0.5*1e-3.*[15, 15, 20, 15, 15]';
 t_stiff=h_ps.*ones(5,1);
 E_stiff=E10s.*ones(5,1);
 Area_stiff=w_stiff.*t_stiff;
@@ -69,7 +69,7 @@ t_skin=[h_p, h_p]';
 E_skin=[E10, E10]';
 Area_skin=t_skin.*w_skin;
 EA_skin=E_skin.*Area_skin;
-loaddist=EA_skin(1)/(EA_skin(1)+5*sum(EA_stiff));
+loaddist=EA_skin(1)/(EA_skin(1)+6*sum(EA_stiff));
 loaddistapprox=A(1,1)/(A(1,1)+sum(EA_stiff)/ds);
 
 % total
