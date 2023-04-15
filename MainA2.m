@@ -28,7 +28,7 @@ n_IS=5;
 ogskin=[0 90 +45 -45 -45 +45 90 0];
 layupskin=[0 90 +45 -45 -45 +45 90 0];
 oghat = [0 90 0 90 90 0 90 0];
-hat=[0 90 0 90 0 0 90 0 90 0];
+hat=[0 90 0 90 90 0 90 0];
 
 
 [E_og_skin, EA_og_skin, area_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
@@ -36,7 +36,7 @@ hat=[0 90 0 90 0 0 90 0 90 0];
 
 
 [E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 1);
+[E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.9);
 %[E_stiff,EA_stiff, EI_stiff,area_stiff]=IStiff_prop(n_IS); %there are now 4 stiffeners
 
 
@@ -157,7 +157,9 @@ aa=inv(A);
 E10=1/aa(1,1)/h_p;
 E20=1/aa(2,2)/h_p;
 G12=1/aa(3,3)/h_p;
-w_stiff=factor.*1e-3.*[15, 15, 20, 15, 15]';
+w_stiff=1e-3.*[15, 15, 20, 15, 15]';
+w_stiff(1)=factor.*w_stiff(1);
+w_stiff(end)=factor.*w_stiff(end);
 t_stiff=h_p.*ones(5,1);
 E_stiff=E10.*ones(5,1);
 Area_stiff=w_stiff.*t_stiff;
