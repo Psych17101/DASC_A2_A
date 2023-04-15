@@ -1,0 +1,21 @@
+disp('-------------------------------------')
+disp('Demo: Moments of a circle with r=10')
+disp('-------------------------------------')
+
+
+
+r=10; 
+th=(0:1:359)'; 
+xy=r*[cos(th*pi/180),sin(th*pi/180)];
+Polygon=PolygonMoments(xy,[],-4)
+disp 'In this example, because of the 360 degree symmetry,'
+disp 'any x-y axes are principal axes'
+
+b=60;
+h=35;
+theta = pi/6;
+
+xy1 = [b/2 0]
+xy2 = [b/2+h*tan(theta), ]
+
+
