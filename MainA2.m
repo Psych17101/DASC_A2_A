@@ -180,7 +180,7 @@ EA=n_S*sum(E_stiff.*Area_stiff);
 Area=n_S*sum(Area_stiff);
 E=E10;
 
-phi=19.471;
+phi=asind(0.5/(100*w_stiff(2)));
 d_stiff=inv(D);
 E_b =12./t_stiff.^3/d_stiff(1,1);
 y=1e-2.*[t_stiff(1)/2, 1/2*1.5*cosd(phi), 1.5*cosd(phi)+t_stiff(3)/2, 1/2*1.5*cosd(phi), t_stiff(1)/2]';
