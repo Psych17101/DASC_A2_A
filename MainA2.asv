@@ -3,13 +3,10 @@ close;
 format short g;
 
 % Define material properties
-E_x = 62.046*10^9;
-E_y = 62.046*10^9;
-E1   = 165*10^9;% Pa - direction modulus of the lamina
-E2   = 8*10^9  ; % Pa
-nu12 = 0.05 ;
-nu21 = nu12*E1/E2;
-G12  = 6*10^9  ; % Pa
+Ex = 62.046*10^9;
+Ey = 62.046*10^9;
+vxy = 0.05 ;
+Gxy  = 6*10^9  ; % Pa
 X_T = 1517*10^6;
 X_C = 1379*10^6;
 Y_T = 1450*10^6;
@@ -17,236 +14,196 @@ Y_C = 1379*10^6;
 S = 99*10^6;
 
 % Panel dimensions
-a = 0.48; % [m] y direction 
-b = 1; % [m] x direction (side where force is applied)
-n_stiff=5; %number of stiffeners
-ds = a/n_stiff; 
-%% Initialisation of Composites Model
-% ABD Skin/Panel
-% Laminate definition (plies of equal thickness)
-%thetadt_skin = [0 90 +45 -45 -45 +45 90 0];%Original 
-thetadt_skin = [0 90 +45 -45 -45 +45 90 0];% New tested
-[A_skin,B_skin,D_skin,ABD_skin,h_skin,Qbar] = ABD_matrixCal(thetadt_skin,E_x,E_y,nu12,G12);
-% Calcuation of global strain for first ply failure
-
-F = [-4e3/a;0;0];
-strain_glo = A_skin\F;
-% Calculation of global stresses
-stress_glo = Qbar(:,:,1)*strain_glo; % global sigmaxx etc...
-Nplies = length(thetadt_skin);
-for l = 1:Nplies
-            % Calculations of local Strains and Stresses
-            [eps_loc] = strain_gtol(strain_glo,thetadt_skin(l));
-            [sigma_loc] = stress_gtol(stress_glo,thetadt_skin(l));% ply i angle in radians, from bottom
-            % Failure index with Maximum Stress criterion
-            [FI_1(l),FI_2(l),FI_3(l)]= MaxStress(sigma_loc(1),sigma_loc(2),sigma_loc(3),X_T,X_C,Y_T,Y_C,S);
-end
-
-% ABD hat Stiffeners
-%thetadt_hat = [0 90 0 90 90 0 90 0];% original
-thetadt_hat = [0 90 0 90 90 0 90 0];% new test
-[A_hat,B_hat,D_hat,ABD_hat,h_hat,Qbar_hat] = ABD_matrixCal(thetadt_hat,E_x,E_y,nu12,G12);
-
-F = [-3e3/a;0;0];
-strain_glo = A_hat\F;
-stress_glo = Qbar_hat(:,:,1)*strain_glo; % global sigmaxx etc...
-Nplies = length(thetadt_skin);
-for l = 1:Nplies
-            % Calculations of local Strains and Stresses
-            [eps_loc] = strain_gtol(strain_glo,thetadt_skin(l));
-            [sigma_loc] = stress_gtol(stress_glo,thetadt_skin(l));% ply i angle in radians, from bottom
-            % Failure index with Maximum Stress criterion
-            [FI_1(l),FI_2(l),FI_3(l)]= MaxStress(sigma_loc(1),sigma_loc(2),sigma_loc(3),X_T,X_C,Y_T,Y_C,S);
-end
-
-%Equivalent Stiffness and Bending
-A_hatT = n_stiff*A_hat;
-A_eq = A_hatT + A_skin;
-
-inv_A_hatT = inv(A_hatT);
-EA_hat1 = 1/(inv_A_hatT(1,1)*h_hat);
-
-D_hatT = n_stiff*D_hat;
-D_eq = D_hatT + D_skin;
-
-inv_D_hatT = inv(D_hatT);
-EI_hat1 = 1/inv(D_hat(1,1)*h_skin);
-
-%% Skin calulations % Section 8.8
-D_skin(1,1) = 659.7*10^3;
-D_skin(1,2) = 466.9*10^3;
-D_skin(2,2) = 659.7*10^3;
-D_skin(3,3) = 494*10^3;
-AR_bar = b/ds;
-AR_bar = 45.7/50.8;
-invA_skin = inv(A_skin);
-invA_hat = inv(A_hat);
-E_skin = 1/(invA_skin(1,1)*h_skin); % equ 8.6
-E_hat = 1/(invA_hat(1,1)*h_hat); % equ 8.6 - membrane stiffness of only on  
-N_cr = pi^2/b^2*(D_skin(1,1)+2*(D_skin(1,2)+2*D_skin(3,3))+D_skin(2,2))/(a*(1+A_skin(1,2)/A_skin(1,1)));
-N_x = 7*10^3/0.48;
-% equa 7.15
-%a_eff = a/(2*(1+2*(1+A_skin(1,2)/A_skin(1,1))*(N_cr/N_x)*(A_skin(1,1)/(A_skin(1,1)+3*A_skin(2,2)))));
-a_eff = 0.303*a;
-m = 10; %m_optimal 
-b = 1;
-
-N_x_skin = (pi^2/b^2)*(D_skin(1,1)*m^2 + 2*(D_skin(1,2)+2*D_skin(3,3))*AR_bar^2 + D_skin(2,2)*AR_bar^4/m^2); %(9.20)
-% We know that with 7kN that our skin fails 
-%N/m
-Force_buckling = N_x_skin*a; %N 
-
-%% Properties of Stiffeners
-%hat
-Area_hat = 4.191e-5;%Cross-sectional area of hat stiffener [m^2]
-Interia_hat =  2.0793e-09;
-members_hat = 5;
-%I
-Area_I = 8.2078e-05;%Cross-sectional area of hat stiffener [m^2]
-Interia_I =  2.0394e-08;
-members_I = 3;
-%J
-Area_J = 5.334e-05;%Cross-sectional area of hat stiffener [m^2]
-Interia_K =  1.4432e-08;
-members_J = 3;
-
-EI_hat = members_hat*E_hat*Interia_hat;
-Area_skin = a_eff*h_skin;
-EA_hat = members_hat*E_hat*Area_hat; 
-EA_skin = E_skin*Area_skin;
-EA_total = EA_hat + EA_skin; % EA of one section stiffeners and skin
-
-% Ratio of force on each member
-rF_m1 = EA_hat/EA_total;
-rF_m2 = EA_skin/EA_total;
-
-%F_total_hat = rF_m1*Loadbeyond_buckling;
-%F_total_skin = rF_m2*Load_buckling + Loadbeyond_buckling;
-% 
-% Applied_sigma_hat = F_total_skin/Area_hat;
-% Applied_sigma_skin = F_total_skin/Area_skin;
-
-lambda = (A_skin(1,1)+EA_hat/ds)/A_skin(1,1);
-beta = sqrt(D_skin(2,2)/D_skin(1,1));
-AR_bar = b/ds;
-AR = b/a;
-%% Section 9.2.1.1 + 9.2.1.2- 
-Force = 7*10^3;
-F_skin = A_skin(1,1)/(A_skin(1,1)+ EA_hat/ds)*Force; % eq 9.18
-F_hat = Force - F_skin;
-N_xskin = F_skin/a; % eq 9.19
-m = 2; % makes realistic a_eff - first condition of of skin stiffener seperation
-k = 10;
-N_x_skin = (pi.^2./b.^2).*(D_skin(1,1).*k.^2 + 2.*(D_skin(2,1)+2.*D_skin(3,3)).*AR_bar.^2 + D_skin(2,2).*AR_bar.^4./k.^2); % eq 9.20
-N_x_panel = (pi.^2./b.^2).*((D_skin(1,1)+EI_hat/ds).*m.^2 + 2.*(D_skin(2,1)+2.*(n_stiff*D_hat(3,3))).*AR.^2 + D_skin(2,2).*AR.^4./m.^2); % eq 9.20
-%N_panel = (pi^2/a^2)*(D_eq(1,1)*m^2 + 2*(D_eq(2,1)+2*D_eq(3,3))*AR^2 + D_eq(2,2)*AR^4/m^2); % eq 9.20
-a_eff = a/(2*(1+2*(1+A_skin(1,2)/A_skin(1,1))*(1-N_x_skin(1)/N_xskin)*(A_skin(1,1)/(A_skin(1,1)+3*A_skin(2,2)))));
-a_eff = 0.303*a;
-EI_skin_buckles = D_skin(1,1)*ds*((beta)*(2*lambda*AR_bar^2-beta*AR^4)+ 2*((D_skin(1,2)+2*D_skin(3,3))/D_skin(1,1))*(lambda*AR_bar^2-AR^2)-1); % Eq 9.30
-k_opt = (D_skin(2,2)/(D_skin(1,1)))^0.25*(AR_bar);
-m_opt = (D_skin(2,2)/(D_skin(1,1)+EI_hat/ds))^0.25*(AR); % m=1 since m<1 eq
-k = 10;
-N_x_skin = (pi.^2./b.^2).*(D_skin(1,1).*k.^2 + 2.*(D_skin(2,1)+2.*D_skin(3,3)).*AR_bar.^2 + D_skin(2,2).*AR_bar.^4./k.^2); % eq 9.20
+a = 1; % [m] y direction 
+b = 0.48; % [m] x direction (side where force is applied)
+n_S=5; %number of stiffeners
+ds = a/n_S; 
+P=7e3;
+n_IS=5;
+%% base values
 
 
 
-skin_buckles = EI_hat > EI_skin_buckles;
-disp(skin_buckles)
-% if 1 then skin buckles before stiff
+%layups of skin and hat and new skin
+ogskin=[0 90 +45 -45 -45 +45 90 0];
+layupskin=ogskin;%[0 90 +45 -45 45 45 -45 +45 90 0];
+oghat = [0 90 0 90 90 0 90 0];
+oghat2 = [0 90 0 0 0 0 90 0];
+ABD_matrixCal(oghat,Ex,Ey,vxy,Gxy)
+ABD_matrixCal(oghat2,Ex,Ey,vxy,Gxy)
 
 
-% stiffener buckling - Panel breaker condition - didnt need to do but ok 
-F_skin_eff = 2*A_skin(1,1)*a_eff/(2*A_skin(1,1)*a_eff + EA_hat)*Force; %E 9.31
-F_hat_ = EA_hat/(2*A_skin(1,1)*a_eff + EA_hat)*Force; %E 9.32
-% Proper Deconstruction of distribution of force
 
-F_hat_single = F_hat_*(ds/a); % Eq 9.33
-F_hat_b = pi^2*EI_hat/b^2; %Eq 9.34
-F_skin_bucking = a*N_x_skin;
-k = k_opt;
-% no post buckling PB = 1
-F_skin_b = a*(pi^2/b^2)*(D_skin(1,1)*k^2 + 2*(D_skin(2,1)+2*D_skin(3,3))*AR_bar^2 + D_skin(2,2)*AR_bar^4/k^2);
-
-%EI_hat_buckles = (lambda-1)*ds^2/(2*a_eff)*(D_skin(1,1)*k^2 + 2*(D_skin(2,1)+2*D_skin(3,3))*AR_bar^2 + D_eq(2,2)*AR_bar^4/k^2);
-EI_hat_buckles = (lambda-1)*ds*(D_skin(1,1)*k^2 + 2*(D_skin(2,1)+2*D_skin(3,3))*AR_bar^2 + D_eq(2,2)*AR_bar^4/k^2);
-
-stiff_buckles = EI_hat < EI_hat_buckles;
-disp(stiff_buckles)
-% Confirms that stiff do not buckles on skin does
-% in the end the skin and stiffeners buckle with 
-
-%% Crippling calculations
-% hat
-inv_A_skin = inv(A_skin);
-E_skin = 1/(inv_A_skin(1,1)*h_skin);
-m = 1;
-N_0 = pi^2/b^2*(D_skin(1,1)*m^2 + 2*(D_skin(1,2) + 2*D_skin(3,3))*AR^2 + D_skin(2,2)*AR^4/m^2);
-F_0 = N_0*a;
-
-b_m1 = 1.5/100; % Flange 
-b_m2 = 1.5/100; % Angle 
-b_m3 = 2/100; % Top
-ratio_m1 = b_m1/h_hat;
-ratio_m2 = b_m2/h_hat;
-ratio_m3 = b_m3/h_hat;
-ratio_m4 = a_eff/h_skin;
-
-% Stiffener
-crip_m1 = OEFcrippling(ratio_m1,Y_C);
-crip_m2 = NEFcrippling(ratio_m2,Y_C);
-crip_m3 = NEFcrippling(ratio_m3,Y_C);
-% Skin 
-crip_m4 = NEFcrippling(ratio_m4,Y_C);
+[E_og_skin, EA_og_skin, area_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
+[E_skin, EA_skin, area_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
 
 
-%%
+[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S);
+[E_stiff,EA_stiff, EI_stiff,area_stiff]=IStiff_prop(n_IS); %there are now 4 stiffeners
 
 
-%%
-%F_skin = A_skin(1,1)/(A_skin(1,1) + A_hatT(1,1))*Force; %eq. (9.18)
-%N_skin = F_skin/bp; %eq. (9.19)
 
-% Assumed simply supported
-%N_x_skin = (pi^2/a^2)*(D_skin(1,1)*k^2 + 2*(D_skin(1,2)+2*D_skin(3,3))*AR^2 + D_skin(2,2)*AR^4/k^2); %(9.20)
 
-%m = 1;
+%% localSkinBuckling, input(n_S, layupskin), output(PB)
 
-%N_x_panel = (pi^2/a^2)*(D_eq(1,1)*m^2 + 2*(D_eq(2,1)+2*D_eq(3,3))*AR^2 + D_eq(2,2)*AR^4/m^2);
+
+PB_og=localSkinBuckling(n_S, ogskin, EA_og_skin, EA_og_stiff, P)
+PB_new=localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)
+
+
+
+wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% thoughts, data from crippling file
+
+
+area_stiff=5*6.096e-05; %area of the stiffeners
+area_skin=0.00036576;
+totarea=(area_skin+area_stiff);
+ar=area_skin/totarea;
+
+E_stiff=6.2046e+10;
+E_skin=4.504e+10;
+
+EA_skin=area_skin*E_skin;
+EA_stiff=area_stiff*E_stiff;
+
+lr=EA_skin/(EA_skin+EA_stiff); %this is the original percentage of loading into the skin
+F_skin=lr*7e3;
+F_stiff=1-F_skin;
+
+%now we assume that we increase the thickness of the skin with 25% (adding
+% one layer, for example, +45 -45, this leads to PB=0.8 (no buckling)
+
+area_skin_new=1.25*area_skin;
+E_skin_new=4.0574e+10;
+EA_new=area_skin_new*E_skin_new;
+
+% so to reduce the weight, the area of the stiffeners (which will be four),
+% has to become:
+
+decrease=1-(totarea-area_skin_new)/area_stiff; %=30%
+
+% this means that the new stiffener areas will have to increase with 4%
+
+area_stiff_new=4*4.0958e-5;
+totarea_new=area_stiff_new+area_skin_new;
+weightratio=totarea_new/totarea;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 
 %% Functions
-function [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,E1,E2,nu12,G12)
+function [E, EA, Area] = calculateEAskin(layup, Ex, Ey, vxy, Gxy, b)
+thetadt=layup;
+[A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
+aa=inv(A);
+E10=1/aa(1,1)/h_p;
+E20=1/aa(2,2)/h_p;
+G12=1/aa(3,3)/h_p;
+EA=E10*b*h_p;
+Area=b*h_p;
+E=E10;
+end
+
+
+function [E, EA, EI, Area] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S) %for the original stiffener
+thetadt=layup;
+[A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
+aa=inv(A);
+E10=1/aa(1,1)/h_p;
+E20=1/aa(2,2)/h_p;
+G12=1/aa(3,3)/h_p;
+w_stiff=1e-3.*[15, 15, 20, 15, 15]';
+t_stiff=h_p.*ones(5,1);
+E_stiff=E10.*ones(5,1);
+Area_stiff=w_stiff.*t_stiff;
+EA=n_S*sum(E_stiff.*Area_stiff);
+Area=n_S*sum(Area_stiff);
+E=E10;
+
+phi=19.471;
+d_stiff=inv(D);
+E_b =12./t_stiff.^3/d_stiff(1,1);
+y=1e-2.*[t_stiff(1)/2, 1/2*1.5*cosd(phi), 1.5*cosd(phi)+t_stiff(3)/2, 1/2*1.5*cosd(phi), t_stiff(1)/2]';
+y_neutral=sum(E_stiff.*Area_stiff.*y)/sum(E_stiff.*Area_stiff);
+d=y_neutral-y;
+EIind=E_b.*(w_stiff.*t_stiff.^3/12+Area_stiff.*d.^2);
+EI=sum(EIind);
+
+
+end
+
+
+function [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(layup,E1,E2,nu12,G12)
+thetadt=layup;
 Nplies_p  = length(thetadt);
 thetadb = fliplr(thetadt); % ply angles in degrees, from bottom
 h_ply   = 0.1905*10^(-3)/2;   % SI units, meters
 h_p      = Nplies_p * h_ply ;
 z       = -h_p/2:h_ply:h_p/2;
 
-% Creation of layering position in ply starting from bottom
-for i = 1:Nplies_p
-    zbar(i) = - (h_p + h_ply)/2 + i*h_ply;
-end
-
 % ABD Matrix Initialisation
 A  = zeros(3,3);
 B  = zeros(3,3);
 D  = zeros(3,3);
 
-% Creation of Reduced Compliance and Stiffness Matrix
-[S, Q] = ReducedComplianceStiffness(E1,E2,nu12,G12);
 [moduli]= [E1 E2 nu12 G12];
 
 % Creation of ABD Matrix
 for i = 1:Nplies_p
-    [Qbar(:,:,i),Sbar(:,:,i)] = QbarandSbar(thetadb(i),moduli);
+    [Qbar(:,:,i),Sbar(:,:,i)] = QbarandSbar(thetadt(i),moduli)
     A  = A  + Qbar(:,:,i) * (z(i+1)-z(i)) ; %N/m,
     B  = B  + (1/2)* Qbar(:,:,i)* (z(i+1)^2-z(i)^2); %N
     D  = D  + (1/3)* Qbar(:,:,i) * (z(i+1)^3-z(i)^3); %Nm
     ABD  = [A  B ; B  D ];
 end
+
 end
 % Take I beam stiffness with same thickness everywhere
 % Recalculate ABD matrix
@@ -361,3 +318,25 @@ T = [c^2, s^2, 2*s*c; s^2, c^2, -2*s*c; -s*c, s*c, c^2-s^2;];
 % local strain
 stress_loc=T*stress_glo;
 end
+
+% function [FI_max]=fpf(layup, F)
+% % ABD Skin/Panel
+% % Laminate definition (plies of equal thickness)
+% %thetadt_skin = [0 90 +45 -45 -45 +45 90 0];%Original 
+% thetadt_skin =layup;% New tested
+% [A_skin,B_skin,D_skin,ABD_skin,h_skin,Qbar] = ABD_matrixCal(thetadt_skin,Ex,Ey,nuxy,Gxy);
+% % Calcuation of global strain for first ply failure
+% 
+% F = [-F/a;0;0];
+% strain_glo = A_skin\F;
+% % Calculation of global stresses
+% stress_glo = Qbar(:,:,1)*strain_glo; % global sigmaxx etc...
+% Nplies = length(thetadt_skin);
+% for l = 1:Nplies
+%             % Calculations of local Strains and Stresses
+%             [eps_loc] = strain_gtol(strain_glo,thetadt_skin(l));
+%             [sigma_loc] = stress_gtol(stress_glo,thetadt_skin(l));% ply i angle in radians, from bottom
+%             % Failure index with Maximum Stress criterion
+%             [FI_1(l),FI_2(l),FI_3(l)]= MaxStress(sigma_loc(1),sigma_loc(2),sigma_loc(3),X_T,X_C,Y_T,Y_C,S);
+% end
+% end

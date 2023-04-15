@@ -34,8 +34,8 @@ next=(bp-b_stiff*n_S)/(n_S-1);
 dontworry=death<next; %if this is true, it dies out before the next stiffener
 
 %if this is alright, the interaction between the stiffeners can be
-%neglected
-%%
+%neglected, nr.1 of the guidelines from page 249 is achieved
+%%  
 
 
 

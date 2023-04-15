@@ -1,4 +1,4 @@
-function [E_I,EA_I, EI_I,Area_tot] = IStiffener_comp(n_s)
+function [E_I,EA_I, EI_I,Area_tot] = IStiff_prop(n_s)
 % Define material properties
 E_x = 62.046*10^9;
 E_y = 62.046*10^9;
@@ -16,14 +16,14 @@ S = 99*10^6;
 % ABD I stiffeners
 thetadt_I1 = [0 90 0 0 90 0];% bottom
 [A_I1,B_I1,D_I1,ABD_I1,h_I1,Qbar_1] = ABD_matrixCal(thetadt_I1,E1,E2,nu12,G12);
-thetadt_I2 = [0 90 +45 -45 -45 +45 90 0];% web
+thetadt_I2 = [0 90 +45  +45 90 0];% web
 [A_I2,B_I2,D_I2,ABD_I2,h_I2,Qbar_2] = ABD_matrixCal(thetadt_I2,E1,E2,nu12,G12);
-thetadt_I3 = [0 90 0 0 0 0 0 0 90 0];% Top
+thetadt_I3 = [0 90 0 0 0 0 90 0];% Top
 [A_I3,B_I3,D_I3,ABD_I3,h_I3,Qbar_3] = ABD_matrixCal(thetadt_I3,E1,E2,nu12,G12);
 
-b_I1 = 1/100;
-b_I2 = 3/100;
-b_I3 = 1/100; % For I stiffener
+b_I1 = 2/100;
+b_I2 = 5/100;
+b_I3 = 2/100; % For I stiffener
 
 %[E_stiffI,EA_stiffI,EI_stiffI,Area_totI] = IStiffener_comp(A_I1,A_I2,A_I3,D_I1,D_I2,D_I3,h_I1,h_I2,h_I3,b_I1,b_I2,b_I3,n_s)
 
