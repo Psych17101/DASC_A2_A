@@ -51,26 +51,17 @@ PB_new=localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)
 lr=EA_skin/(EA_skin+EA_stiff)
 
 wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
+
+Pcr=stiffenerColumnBuckling(EI_og_stiff);
+P_skin = P*(1-lr);
+
+CB = P_skin/Pcr
+
+
 Pcr=stiffenerColumnBuckling(EI_stiff);
 P_skin = P*(1-lr);
 
 CB = P_skin/Pcr
-%
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
