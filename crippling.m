@@ -47,7 +47,7 @@ ds=b/n_S;
 Q=1-vxy*vyx;    
 q=Q^-1;
 Qxx=Ex*q; Qyy=Ey*q; Qxy=vxy*Ey*q; Qss=Gxy;
-thetadt=[0 90 0 90 90 0 90 0];
+thetadt=[0 90 0 0 90 0];
 [As,Bs,Ds,ABDs,h_ps,Qbars] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
 aas=inv(As);
 E10s=1/aas(1,1)/h_ps;

@@ -15,7 +15,7 @@ vyx=vxy*Ey/Ex;
 % E2=(n^4/Ey+(1/Gxy-2*vxy/Ex)*m^2*n^2+m^4/Ex)^(-1);
 % v12=E1*(vxy/Ex*(m^4+n^4)-(1/Ex+1/Ey-1/Gxy)*m^2*n^2);
 % G12=(2*(2/Ex+2/Ey+4*vxy/Ex-1/Gxy)*m^2*n^2+1/Gxy*(m^2*n^2))^(-1);
-lr=EA_skin/(EA_skin+EA_stiff)
+lr=EA_skin/(EA_skin+EA_stiff);
 
 % Q
 Q=1-vxy*vyx;    
@@ -28,12 +28,12 @@ E10=1/aa(1,1)/h_p;
 E20=1/aa(2,2)/h_p;
 G12=1/aa(3,3)/h_p;
 
-%m = 0:1:15; %m_optimal =3
+%m = 0:1:15; 
 a = 1;
 b=0.48;
 
 ds=b/n_S;
-mpred=a/ds*(D(2,2)/D(1,1))^(1/4); %-->3
+mpred=a/ds*(D(2,2)/D(1,1))^(1/4); %-->12, 13
 m=[floor(mpred), floor(mpred)+1];
 %m=10;
 AR_bar=a/ds;
