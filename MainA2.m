@@ -32,13 +32,11 @@ oghat = [0 90 0 90 90 0 90 0];
 hat=[0 90 0 0 90 0];
 
 
-[E_og_skin, EA_og_skin, area_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
-[E_skin, EA_skin, area_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
+[E_og_skin, EA_og_skin, area_og_skin,A_og_skin,Qbar_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
+[E_skin, EA_skin, area_skin,A_skin,Qbar_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
 
-[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.8);
-
-
+[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff,A_og_hat,Qbar_og_hat]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
+[E_stiff,EA_stiff, EI_stiff,area_stiff,A_hat,Qbar_hat]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.8);
 
 %% localSkinBuckling, input(n_S, layupskin), output(PB)
 
@@ -49,9 +47,9 @@ PB_og=localSkinBuckling(n_S, ogskin, EA_og_skin, EA_og_stiff, P)
 PB_new=localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)
 
 Pcr=stiffenerColumnBuckling(EI_og_stiff);
-P_skin = P*(1-lr_og);
+P_og_skin = P*(1-lr_og);
 
-CB_og = P_skin/Pcr
+CB_og = P_og_skin/Pcr
 
 Pcr=stiffenerColumnBuckling(EI_stiff);
 P_skin = P*(1-lr_new);
@@ -60,11 +58,11 @@ CB_new = P_skin/Pcr
 
 wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
 
-
-
-
-
-
+%% Failure 
+FI_max_og_skin = Failure_Criterion(P_og_skin,ogskin,A_og_skin,Qbar_og_skin(:,:,1),X_T,X_C,Y_T,Y_C,S)
+FI_max_skin = Failure_Criterion(P_skin,layupskin,A_skin,Qbar_skin(:,:,1),X_T,X_C,Y_T,Y_C,S)
+FI_max_og_hat = Failure_Criterion(P-P_og_skin,oghat,A_og_hat,Qbar_og_hat(:,:,1),X_T,X_C,Y_T,Y_C,S)
+FI_max_hat = Failure_Criterion(P-P_skin,hat,A_hat,Qbar_hat(:,:,1),X_T,X_C,Y_T,Y_C,S)
 
 
 
@@ -116,7 +114,7 @@ end
 %failure!
 
 
-function [E, EA, Area] = calculateEAskin(layup, Ex, Ey, vxy, Gxy, b)
+function [E, EA, Area,A,Qbar] = calculateEAskin(layup, Ex, Ey, vxy, Gxy, b)
 thetadt=layup;
 [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
 aa=inv(A);
@@ -129,7 +127,7 @@ E=E10;
 end
 
 
-function [E, EA, EI, Area] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S, factor1) %for the original stiffener
+function [E, EA, EI, Area,A,Qbar] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S, factor1) %for the original stiffener
 thetadt=layup;
 [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
 aa=inv(A);

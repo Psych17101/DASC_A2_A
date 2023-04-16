@@ -17,9 +17,10 @@ S = 99*10^6;
 a = 1; % [m] y direction 
 b = 0.48; % [m] x direction (side where force is applied)
 n_S=5; %number of stiffeners
-ds = a/n_S; 
+ds = b/n_S; 
 P=7e3;
 n_IS=6;
+ds_new=b/n_IS;
 %% base values
 
 
@@ -31,13 +32,11 @@ oghat = [0 90 0 90 90 0 90 0];
 hat=[0 90 0 0 90 0];
 
 
-[E_og_skin, EA_og_skin, area_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
-[E_skin, EA_skin, area_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
+[E_og_skin, EA_og_skin, area_og_skin,A_og_skin,Qbar_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
+[E_skin, EA_skin, area_skin,A_skin,Qbar_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
 
-[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.708);
-
-
+[E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff,A_og_hat,Qbar_og_hat]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
+[E_stiff,EA_stiff, EI_stiff,area_stiff,A_hat,Qbar_hat]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.8);
 
 %% localSkinBuckling, input(n_S, layupskin), output(PB)
 
@@ -48,9 +47,9 @@ PB_og=localSkinBuckling(n_S, ogskin, EA_og_skin, EA_og_stiff, P)
 PB_new=localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)
 
 Pcr=stiffenerColumnBuckling(EI_og_stiff);
-P_skin = P*(1-lr_og);
+P_og_skin = P*(1-lr_og);
 
-CB_og = P_skin/Pcr
+CB_og = P_go_skin/Pcr
 
 Pcr=stiffenerColumnBuckling(EI_stiff);
 P_skin = P*(1-lr_new);
@@ -59,42 +58,43 @@ CB_new = P_skin/Pcr
 
 wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
 
-
-
-
-
+%% Failure 
+FI_max_og_skin = Failure_Criterion(P_og_skin,A_og_skin,Qbar_og_skin,X_T,X_C,Y_T,Y_C,S)
+FI_max_skin = Failure_Criterion(P_skin,A_skin,Qbar_skin,X_T,X_C,Y_T,Y_C,S)
+FI_max_og_hat = Failure_Criterion(P-P_og_skin,A_og_hat,Qbar_og_hat,X_T,X_C,Y_T,Y_C,S)
+FI_max_og_skin = Failure_Criterion(P-P_skin,A_hat,Qbar_hat,X_T,X_C,Y_T,Y_C,S)
 
 
 
 
 %% plot
-
-f=0.4:0.001:0.9;
-y1=[];
-y2=[];
-y3=[];
-y4=[];
-for i=f
-    
-    [E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, i);
-    y1=[y1, EA_skin/(EA_skin+EA_stiff)]; %lr
-    y2=[y2, localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)]; %PB
-    y3=[y3, P*(1- EA_skin/(EA_skin+EA_stiff))/stiffenerColumnBuckling(EI_stiff)];%CB
-    y4=[y4, ((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1];
-
-end
-plot(f, y1, f,y2,f,y3,f,y4, f, ones(size(f)), 0.708, 0.9191, "*"); legend("loading ratio", "Local buckling condition", "Column buckling condition", "Weight ratio", "Failure line", ""); xlabel("factor"); grid on;
-
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=IStiff_prop(n_IS); %there are now 6 stiffeners
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=SStiffener_comp(n_IS);
-[E_stiff,EA_stiff, EI_stiff,area_stiff]=TStiffener_comp(n_IS);
-
-
-
-
-
-
-
+% 
+% f=0.4:0.001:1;
+% y1=[];
+% y2=[];
+% y3=[];
+% y4=[];
+% for i=f
+%     
+%     [E_stiff,EA_stiff, EI_stiff,area_stiff]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, i);
+%     y1=[y1, EA_skin/(EA_skin+EA_stiff)]; %lr
+%     y2=[y2, localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)]; %PB
+%     y3=[y3, P*(1- EA_skin/(EA_skin+EA_stiff))/stiffenerColumnBuckling(EI_stiff)];%CB
+%     y4=[y4, ((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1];
+% 
+% end
+% plot(f, y1, f,y2,f,y3,f,y4, f, ones(size(f)), 0.708, 0.9191, "*", 0.8, y2(401), "*", 0.652, y3(253), "*"); legend("loading ratio", "Local buckling condition", "Column buckling condition", "Weight ratio", "Failure line"); xlabel("factor"); grid on;
+% 
+% [E_stiff,EA_stiff, EI_stiff,area_stiff]=IStiff_prop(n_IS); %there are now 6 stiffeners
+% [E_stiff,EA_stiff, EI_stiff,area_stiff]=SStiffener_comp(n_IS);
+% [E_stiff,EA_stiff, EI_stiff,area_stiff]=TStiffener_comp(n_IS);  
+% 
+% 
+% %401
+% %253
+% 
+% 
+% % from the plot, the maximum 
 
 
 
@@ -115,7 +115,7 @@ end
 %failure!
 
 
-function [E, EA, Area] = calculateEAskin(layup, Ex, Ey, vxy, Gxy, b)
+function [E, EA, Area,A,Qbar] = calculateEAskin(layup, Ex, Ey, vxy, Gxy, b)
 thetadt=layup;
 [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
 aa=inv(A);
@@ -128,7 +128,7 @@ E=E10;
 end
 
 
-function [E, EA, EI, Area] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S, factor1) %for the original stiffener
+function [E, EA, EI, Area,A,Qbar] = calculateEAhat(layup, Ex, Ey, vxy, Gxy, n_S, factor1) %for the original stiffener
 thetadt=layup;
 [A,B,D,ABD,h_p,Qbar] = ABD_matrixCal(thetadt,Ex,Ey,vxy,Gxy);
 aa=inv(A);
@@ -141,6 +141,7 @@ w_stiff(4)=factor1.*w_stiff(4);
 w_stiff(1)=factor1.*w_stiff(1);
 w_stiff(end)=factor1.*w_stiff(end);
 w_stiff(3)=factor1.*w_stiff(3);
+w_stiff;
 t_stiff=h_p.*ones(5,1);
 E_stiff=E10.*ones(5,1);
 Area_stiff=w_stiff.*t_stiff;
