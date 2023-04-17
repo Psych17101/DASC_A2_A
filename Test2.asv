@@ -23,49 +23,62 @@ n_IS=6;
 ds_new=b/n_IS;
 %% base values
 
-
-
 %layups of skin and hat and new skin
 ogskin=[0 90 +45 -45 -45 +45 90 0];
 layupskin=[0 90 +45 -45 -45 +45 90 0];
+%layupskin=[ +45 -45 0 0 0 0 -45 +45];
 oghat = [0 90 0 90 90 0 90 0];
 hat=[0 90 0 0 90 0];
+%hat=[+45 -45 0 0 0 0 -45 +45];
 
+layupskin_45 = [ +45 -45 0 0 0 0 -45 +45];
+layupskin_45 = [ 0 90 0 0 0 0 90 0];
+%layupskin_45=[0 90 +45 -45 -45 +45 90 0];
 
 [E_og_skin, EA_og_skin, area_og_skin,A_og_skin,Qbar_og_skin]=calculateEAskin(ogskin, Ex, Ey, vxy, Gxy, b);
 [E_skin, EA_skin, area_skin,A_skin,Qbar_skin]=calculateEAskin(layupskin, Ex, Ey, vxy, Gxy, b);
+[E_skin_45, EA_skin_45, area_skin_45,A_skin_45,Qbar_skin_45]=calculateEAskin(layupskin_45, Ex, Ey, vxy, Gxy, b);
+
 
 [E_og_stiff, EA_og_stiff, EI_og_stiff, area_og_stiff,A_og_hat,Qbar_og_hat]=calculateEAhat(oghat, Ex, Ey, vxy, Gxy, n_S, 1);
 [E_stiff,EA_stiff, EI_stiff,area_stiff,A_hat,Qbar_hat]=calculateEAhat(hat, Ex, Ey, vxy, Gxy, n_IS, 0.8);
+
+[E_I,EA_I, EI_I,area_I] = IStiff_prop(n_IS);
 
 %% localSkinBuckling, input(n_S, layupskin), output(PB)
 
 lr_og=EA_og_skin/(EA_og_skin+EA_og_stiff)
 lr_new=EA_skin/(EA_skin+EA_stiff)
+lr_I=EA_skin_45/(EA_skin_45+EA_I)
 
 PB_og=localSkinBuckling(n_S, ogskin, EA_og_skin, EA_og_stiff, P)
 PB_new=localSkinBuckling(n_IS, layupskin, EA_skin, EA_stiff, P)
+PB_I=localSkinBuckling(n_IS, layupskin_45, EA_skin, EA_I, P)
 
 Pcr=stiffenerColumnBuckling(EI_og_stiff);
 P_og_skin = P*(1-lr_og);
 
-CB_og = P_go_skin/Pcr
+CB_og = P_og_skin/Pcr
 
 Pcr=stiffenerColumnBuckling(EI_stiff);
 P_skin = P*(1-lr_new);
 
 CB_new = P_skin/Pcr
 
-wr=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
+Pcr=stiffenerColumnBuckling(EI_I);
+P_skin = P*(1-lr_I);
+
+CB_I = P_skin/Pcr
+
+
+wr_hat=((area_og_skin+area_og_stiff)/(area_skin+area_stiff))^-1
+wr_I=((area_og_skin+area_og_stiff)/(area_skin_45+area_I))^-1
 
 %% Failure 
-FI_max_og_skin = Failure_Criterion(P_og_skin,A_og_skin,Qbar_og_skin,X_T,X_C,Y_T,Y_C,S)
-FI_max_skin = Failure_Criterion(P_skin,A_skin,Qbar_skin,X_T,X_C,Y_T,Y_C,S)
-FI_max_og_hat = Failure_Criterion(P-P_og_skin,A_og_hat,Qbar_og_hat,X_T,X_C,Y_T,Y_C,S)
-FI_max_og_skin = Failure_Criterion(P-P_skin,A_hat,Qbar_hat,X_T,X_C,Y_T,Y_C,S)
-
-
-
+FI_max_og_skin = Failure_Criterion(P_og_skin,ogskin,A_og_skin,Qbar_og_skin(:,:,1),X_T,X_C,Y_T,Y_C,S)
+FI_max_skin = Failure_Criterion(P_skin,layupskin,A_skin,Qbar_skin(:,:,1),X_T,X_C,Y_T,Y_C,S)
+FI_max_og_hat = Failure_Criterion(P-P_og_skin,oghat,A_og_hat,Qbar_og_hat(:,:,1),X_T,X_C,Y_T,Y_C,S)
+FI_max_hat = Failure_Criterion(P-P_skin,hat,A_hat,Qbar_hat(:,:,1),X_T,X_C,Y_T,Y_C,S)
 
 %% plot
 % 

@@ -1,7 +1,8 @@
 function [FI_max] = Failure_Criterion(F,layup,A,Qbar,X_T,X_C,Y_T,Y_C,S)
 
 F = [-F;0; 0];
-strain_glo = A\F;
+inv_A = inv(A);
+strain_glo = inv_A*F;
 % Calculation of global stresses
 stress_glo = Qbar*strain_glo; % global sigmaxx etc...
 
